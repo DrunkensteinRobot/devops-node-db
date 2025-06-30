@@ -1,0 +1,36 @@
+
+
+services:
+  db:
+    image: postgres:15
+    container_name: pg-devops
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: lkone
+      POSTGRES_DB: devops_lab
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  api:
+    build: .
+    container_name: node-api
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: lkone
+      DB_NAME: devops_lab
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src/app
+
+volumes:
+  pgdata:
