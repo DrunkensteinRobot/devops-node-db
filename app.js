@@ -176,6 +176,17 @@ app.put('/customers/:id', async (req, res) => {
     res.status(500).send("Error updating customer");
   }
 });
+//debug
+app.get('/debug-db', async (req, res) => {
+  try {
+    const result = await client.query('SELECT NOW()');
+    res.send(`✅ DB connected. Server time: ${result.rows[0].now}`);
+  } catch (err) {
+    console.error('❌ DB connection failed:', err);
+    res.status(500).send(`❌ DB error: ${err.message}`);
+  }
+});
+
 
 // DELETE a customer by ID
 app.delete('/customers/:id', async (req, res) => {
