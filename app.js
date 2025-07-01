@@ -8,6 +8,8 @@ const swaggerSpec = require('./swagger');
 const app = express();
 const port = 3000;
 
+app.set('json spaces', 2); // pretty-print JSON output
+app.use(express.static('public'));
 app.use(express.json());
 
 // Swagger route
@@ -57,7 +59,11 @@ app.get('/users', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Error fetching users:', err.message, err.stack);
-    res.status(500).send("Failed to fetch users");
+    res.status(400).json({
+  status: "error",
+  message: "❌ Name and email are required"
+});
+
   }
 });
 
