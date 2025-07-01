@@ -7,10 +7,15 @@ const swaggerSpec = require('./swagger');
 
 const app = express();
 const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.set('json spaces', 2); // pretty-print JSON output
 app.use(express.static('public'));
 app.use(express.json());
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
 
 // Swagger route
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
