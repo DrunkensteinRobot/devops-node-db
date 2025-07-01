@@ -16,70 +16,8 @@ app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/', (req, res) => {
-  res.send(`
-    <h1>Welcome to the DevOps Node API</h1>
-    <form id="userForm">
-      <h3>Add User</h3>
-      <input type="text" id="name" placeholder="Name" required />
-      <input type="email" id="email" placeholder="Email" required />
-      <button type="submit">Add User</button>
-    </form>
-    <br/>
-    <h3>Find User by ID</h3>
-    <input type="number" id="searchId" placeholder="Enter user ID" />
-    <button onclick="fetchUserById()">Get User</button>
-    <pre id="foundUser"></pre>
-    <br/>
-    <h3>Users</h3>
-    <table border="1" id="userTable">
-      <thead>
-        <tr><th>ID</th><th>Name</th><th>Email</th><th>Delete</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <script>
-      async function loadUsers() {
-        const res = await fetch('/users/all');
-        const users = await res.json();
-        const tbody = document.querySelector('#userTable tbody');
-        tbody.innerHTML = '';
-        users.forEach(u => {
-          const row = `<tr><td>${u.id}</td><td>${u.name}</td><td>${u.email}</td><td><button onclick="deleteUser(${u.id})">Delete</button></td></tr>`;
-          tbody.innerHTML += row;
-        });
-      }
-
-      async function deleteUser(id) {
-        await fetch(`/users/${id}`, { method: 'DELETE' });
-        loadUsers();
-      }
-
-      async function fetchUserById() {
-        const id = document.getElementById('searchId').value;
-        if (!id) return;
-        const res = await fetch(`/users/${id}`);
-        const data = await res.json();
-        document.getElementById('foundUser').textContent = JSON.stringify(data, null, 2);
-      }
-
-      document.getElementById('userForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('name').value;
-        const email = document.getElementById('email').value;
-        await fetch('/users', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email })
-        });
-        document.getElementById('name').value = '';
-        document.getElementById('email').value = '';
-        loadUsers();
-      });
-
-      loadUsers();
-    </script>
-  `);
+  app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
 });
 
 const client = new Client({
