@@ -6,7 +6,6 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
 
 const app = express();
-const port = 3000;
 const port = process.env.PORT || 3000;
 
 app.set('json spaces', 2); // pretty-print JSON output
