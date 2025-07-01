@@ -1,158 +1,74 @@
 <!DOCTYPE html>
-<!-- force change -->)
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DevOps Node API UI</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>DevOps Node API</title>
 </head>
 <body>
-  <header>
-    <h1>DevOps Node API UI</h1>
-    <nav>
-      <button id="show-users-btn">Users</button>
-      <button id="show-customers-btn">Customers</button>
-    </nav>
-  </header>
+  <h1>Welcome to the DevOps Node API</h1>
 
-  <main>
-    <section id="list-section">
-      <h2 id="list-title">Users</h2>
-      <table id="data-table">
-        <thead>
-          <tr><th>ID</th><th>Name</th><th>Email</th><th>Actions</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
+  <form id="userForm">
+    <h3>Add User</h3>
+    <input type="text" id="name" placeholder="Name" required />
+    <input type="email" id="email" placeholder="Email" required />
+    <button type="submit">Add User</button>
+  </form>
 
-    <section id="form-section">
-      <h2 id="form-title">Add User</h2>
-      <form id="data-form">
-        <input type="hidden" id="item-id" />
-        <label>
-          Name:
-          <input type="text" id="name" required />
-        </label>
-        <label>
-          Email:
-          <input type="email" id="email" required />
-        </label>
-        <button type="submit">Save</button>
-        <button type="button" id="cancel-btn" style="display:none;">Cancel</button>
-      </form>
-    </section>
-  </main>
+  <br/>
+  <h3>Find User by ID</h3>
+  <input type="number" id="searchId" placeholder="Enter user ID" />
+  <button onclick="fetchUserById()">Get User</button>
+  <pre id="foundUser"></pre>
+
+  <br/>
+  <h3>Users</h3>
+  <table border="1" id="userTable">
+    <thead>
+      <tr><th>ID</th><th>Name</th><th>Email</th><th>Delete</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
   <script>
-    const apiBase = ''; // same origin
-
-    let currentType = 'users'; // or 'customers'
-
-    const listTitle = document.getElementById('list-title');
-    const formTitle = document.getElementById('form-title');
-    const tbody = document.querySelector('#data-table tbody');
-    const form = document.getElementById('data-form');
-    const itemIdInput = document.getElementById('item-id');
-    const nameInput = document.getElementById('name');
-    const emailInput = document.getElementById('email');
-    const cancelBtn = document.getElementById('cancel-btn');
-
-    document.getElementById('show-users-btn').onclick = () => loadList('users');
-    document.getElementById('show-customers-btn').onclick = () => loadList('customers');
-
-    function loadList(type) {
-      currentType = type;
-      listTitle.textContent = type.charAt(0).toUpperCase() + type.slice(1);
-      formTitle.textContent = `Add ${listTitle.textContent.slice(0, -1)}`;
-      resetForm();
-
-      fetch(`/${type}`)
-        .then(res => res.json())
-        .then(data => {
-          tbody.innerHTML = '';
-          data.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td>${item.id}</td>
-              <td>${item.name}</td>
-              <td>${item.email}</td>
-              <td>
-                <button onclick="editItem(${item.id}, '${item.name}', '${item.email}')">Edit</button>
-                <button onclick="deleteItem(${item.id})">Delete</button>
-              </td>
-            `;
-            tbody.appendChild(tr);
-          });
-        })
-        .catch(e => alert('Failed to load list'));
+    async function loadUsers() {
+      const res = await fetch('/users/all');
+      const users = await res.json();
+      const tbody = document.querySelector('#userTable tbody');
+      tbody.innerHTML = '';
+      users.forEach(u => {
+        const row = `<tr><td>${u.id}</td><td>${u.name}</td><td>${u.email}</td><td><button onclick="deleteUser(${u.id})">Delete</button></td></tr>`;
+        tbody.innerHTML += row;
+      });
     }
 
-    function resetForm() {
-      itemIdInput.value = '';
-      nameInput.value = '';
-      emailInput.value = '';
-      cancelBtn.style.display = 'none';
-      formTitle.textContent = `Add ${currentType.slice(0, -1)}`;
+    async function deleteUser(id) {
+      await fetch(`/users/${id}`, { method: 'DELETE' });
+      loadUsers();
     }
 
-    form.onsubmit = e => {
+    async function fetchUserById() {
+      const id = document.getElementById('searchId').value;
+      if (!id) return;
+      const res = await fetch(`/users/${id}`);
+      const data = await res.json();
+      document.getElementById('foundUser').textContent = JSON.stringify(data, null, 2);
+    }
+
+    document.getElementById('userForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const id = itemIdInput.value;
-      const name = nameInput.value.trim();
-      const email = emailInput.value.trim();
-
-      if (!name || !email) {
-        alert('Name and email are required.');
-        return;
-      }
-
-      const method = id ? 'PUT' : 'POST';
-      const url = id ? `/${currentType}/${id}` : `/${currentType}`;
-
-      fetch(url, {
-        method,
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      await fetch('/users', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email }),
-      })
-        .then(res => {
-          if (!res.ok) throw new Error('Error saving item');
-          return res.json();
-        })
-        .then(() => {
-          loadList(currentType);
-          resetForm();
-        })
-        .catch(() => alert('Failed to save item'));
-    };
+        body: JSON.stringify({ name, email })
+      });
+      document.getElementById('name').value = '';
+      document.getElementById('email').value = '';
+      loadUsers();
+    });
 
-    cancelBtn.onclick = () => {
-      resetForm();
-    };
-
-    window.editItem = (id, name, email) => {
-      itemIdInput.value = id;
-      nameInput.value = name;
-      emailInput.value = email;
-      formTitle.textContent = `Edit ${currentType.slice(0, -1)}`;
-      cancelBtn.style.display = 'inline-block';
-    };
-
-    window.deleteItem = id => {
-      if (!confirm(`Are you sure you want to delete this ${currentType.slice(0, -1)}?`)) return;
-
-      fetch(`/${currentType}/${id}`, { method: 'DELETE' })
-        .then(res => {
-          if (!res.ok) throw new Error('Error deleting item');
-          return res.json();
-        })
-        .then(() => loadList(currentType))
-        .catch(() => alert('Failed to delete item'));
-    };
-
-    // Load users on page load
-    loadList('users');
+    loadUsers();
   </script>
 </body>
 </html>
+
