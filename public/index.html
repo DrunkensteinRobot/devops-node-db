@@ -1,9 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>DevOps Node API</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f7f7f7;
+    }
+    h1, h3 {
+      color: #333;
+    }
+    input, button {
+      margin: 5px;
+      padding: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background-color: #fff;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+    pre {
+      background-color: #eee;
+      padding: 10px;
+    }
+    .message {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+    }
+  </style>
 </head>
 <body>
+
   <h1>Welcome to the DevOps Node API</h1>
 
   <form id="userForm">
@@ -11,17 +48,18 @@
     <input type="text" id="name" placeholder="Name" required />
     <input type="email" id="email" placeholder="Email" required />
     <button type="submit">Add User</button>
+    <div id="addMessage" class="message"></div>
   </form>
 
   <br/>
   <h3>Find User by ID</h3>
   <input type="number" id="searchId" placeholder="Enter user ID" />
-  <button onclick="fetchUserById()">Get User</button>
+  <button id="getUserBtn">Get User</button>
   <pre id="foundUser"></pre>
 
   <br/>
   <h3>Users</h3>
-  <table border="1" id="userTable">
+  <table id="userTable">
     <thead>
       <tr><th>ID</th><th>Name</th><th>Email</th><th>Delete</th></tr>
     </thead>
@@ -29,46 +67,92 @@
   </table>
 
   <script>
-    async function loadUsers() {
-      const res = await fetch('/users/all');
-      const users = await res.json();
-      const tbody = document.querySelector('#userTable tbody');
-      tbody.innerHTML = '';
-      users.forEach(u => {
-        const row = `<tr><td>${u.id}</td><td>${u.name}</td><td>${u.email}</td><td><button onclick="deleteUser(${u.id})">Delete</button></td></tr>`;
-        tbody.innerHTML += row;
+    document.addEventListener('DOMContentLoaded', () => {
+
+      async function loadUsers() {
+        try {
+          const res = await fetch('/users/all');
+          const users = await res.json();
+          const tbody = document.querySelector('#userTable tbody');
+          tbody.innerHTML = '';
+          users.forEach(u => {
+            const row = `
+              <tr>
+                <td>${u.id}</td>
+                <td>${u.name}</td>
+                <td>${u.email}</td>
+                <td><button onclick="deleteUser(${u.id})">Delete</button></td>
+              </tr>`;
+            tbody.innerHTML += row;
+          });
+        } catch (err) {
+          alert('Error loading users: ' + err.message);
+        }
+      }
+
+      async function deleteUser(id) {
+        try {
+          const res = await fetch(`/users/${id}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('Failed to delete user');
+          loadUsers();
+        } catch (err) {
+          alert('Error deleting user: ' + err.message);
+        }
+      }
+
+      async function fetchUserById() {
+        const id = document.getElementById('searchId').value;
+        const output = document.getElementById('foundUser');
+        output.textContent = '';
+        if (!id) return;
+        try {
+          const res = await fetch(`/users/${id}`);
+          if (!res.ok) throw new Error('User not found');
+          const data = await res.json();
+          output.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+          output.textContent = `Error: ${err.message}`;
+        }
+      }
+
+      document.getElementById('getUserBtn').addEventListener('click', fetchUserById);
+
+      document.getElementById('userForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const msg = document.getElementById('addMessage');
+        msg.textContent = '';
+        msg.className = 'message';
+
+        try {
+          const res = await fetch('/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email })
+          });
+
+          if (res.status === 409) {
+            msg.textContent = '❌ Email already exists.';
+            msg.className = 'error';
+            return;
+          } else if (!res.ok) {
+            throw new Error('Failed to add user');
+          }
+
+          document.getElementById('name').value = '';
+          document.getElementById('email').value = '';
+          msg.textContent = '✅ User added successfully';
+          loadUsers();
+        } catch (err) {
+          msg.textContent = '❌ Error: ' + err.message;
+          msg.className = 'error';
+        }
       });
-    }
 
-    async function deleteUser(id) {
-      await fetch(`/users/${id}`, { method: 'DELETE' });
-      loadUsers();
-    }
-
-    async function fetchUserById() {
-      const id = document.getElementById('searchId').value;
-      if (!id) return;
-      const res = await fetch(`/users/${id}`);
-      const data = await res.json();
-      document.getElementById('foundUser').textContent = JSON.stringify(data, null, 2);
-    }
-
-    document.getElementById('userForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('name').value;
-      const email = document.getElementById('email').value;
-      await fetch('/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email })
-      });
-      document.getElementById('name').value = '';
-      document.getElementById('email').value = '';
       loadUsers();
     });
-
-    loadUsers();
   </script>
+
 </body>
 </html>
-
