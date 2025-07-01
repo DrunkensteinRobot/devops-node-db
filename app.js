@@ -15,7 +15,7 @@ app.use(express.json());
 // Swagger route
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.get('/', (req, res) => {
+// Serve index.html from public folder
   app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
