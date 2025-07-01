@@ -2,12 +2,16 @@ require('dotenv').config();
 
 const express = require('express');
 const { Client } = require('pg');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 
 const app = express();
 const port = 3000;
 
 app.use(express.json());
 
+// Swagger route
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/', (req, res) => {
   res.send(`
@@ -37,6 +41,16 @@ client.connect()
   .catch(err => console.error("❌ DB connection error:", err.stack));
 
 // GET all users
+
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Get all users
+ *     responses:
+ *       200:
+ *         description: A list of users
+ */
 app.get('/users', async (req, res) => {
   try {
     const result = await client.query('SELECT * FROM users ORDER BY id');
@@ -49,6 +63,30 @@ app.get('/users', async (req, res) => {
 
 
 // POST a new user with validation and duplicate check
+
+/**
+ * @swagger
+ * /users:
+ *   post:
+ *     summary: Create a new user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ */
 app.post('/users', async (req, res) => {
   const { name, email } = req.body;
 
