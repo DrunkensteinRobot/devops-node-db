@@ -59,9 +59,10 @@ app.get('/users', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Error fetching users:', err.message, err.stack);
-    res.status(400).json({
+    res.status(500).json({
   status: "error",
-  message: "❌ Name and email are required"
+  message: "❌ Failed to fetch users"
+});
 });
 
   }
