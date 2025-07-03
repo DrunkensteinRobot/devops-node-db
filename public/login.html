@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 400px;
+      margin: 40px auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      box-sizing: border-box;
+    }
+    #message {
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    #message.error {
+      color: red;
+    }
+    #message.success {
+      color: green;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <h1>Login</h1>
+  <form id="loginForm">
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="pin" placeholder="PIN" required />
+    <button type="submit">Login</button>
+  </form>
+  <div id="message"></div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const msg = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      msg.textContent = '';
+      msg.className = '';
+
+      const email = document.getElementById('email').value.trim();
+      const pin = document.getElementById('pin').value.trim();
+
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, pin })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          msg.className = 'success';
+          msg.textContent = '✅ Login successful! Your token:\n' + data.token;
+          // Optionally save token to localStorage/sessionStorage here
+          // localStorage.setItem('token', data.token);
+          // or redirect to another page: window.location.href = '/dashboard.html';
+        } else {
+          msg.className = 'error';
+          msg.textContent = '❌ ' + (data.error || 'Login failed');
+        }
+      } catch (err) {
+        msg.className = 'error';
+        msg.textContent = '❌ Network error: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,13 +1,12 @@
-// swagger.js
 const swaggerJSDoc = require('swagger-jsdoc');
 
 const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'DevOps Node API',
+      title: 'User Auth API',
       version: '1.0.0',
-      description: 'API documentation for your Node.js app',
+      description: 'API for user registration, login, and JWT auth',
     },
     servers: [
       {
@@ -19,10 +18,25 @@ const options = {
         description: 'Local development',
       },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        }
+      }
+    },
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
   },
-  apis: ['./routes/*.js', './app.js'], // adjust based on where your endpoints are
+  apis: ['./index.js', './routes/*.js'], // Make sure your Swagger annotations are in these files
 };
 
 const swaggerSpec = swaggerJSDoc(options);
 
 module.exports = swaggerSpec;
+

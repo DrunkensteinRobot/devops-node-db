@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DevOps Node API</title>
+  <title>Lutendo DB Manager</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -36,123 +36,310 @@
     }
     .error {
       color: red;
+      font-weight: bold;
+    }
+    #swagger-link {
+      display: inline-block;
+      margin: 20px 0;
+      padding: 10px 15px;
+      background-color: #007BFF;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+    }
+    #swagger-link:hover {
+      background-color: #0056b3;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
+  <h1>Lutendo DB QuerySelector</h1>
+  <a href="/api-docs" id="swagger-link" target="_blank">📘 View Swagger API Docs</a>
 
-  <h1>Welcome to the DevOps Node API</h1>
+  <!-- Login Section -->
+  <div id="loginSection">
+    <h3>Login</h3>
+    <input type="email" id="loginEmail" placeholder="Email" required />
+    <input type="password" id="loginPin" placeholder="PIN" required />
+    <button id="loginButton">Login</button>
+    <div id="loginMessage" class="message"></div>
+  </div>
 
-  <form id="userForm">
-    <h3>Add User</h3>
-    <input type="text" id="name" placeholder="Name" required />
-    <input type="email" id="email" placeholder="Email" required />
-    <button type="submit">Add User</button>
-    <div id="addMessage" class="message"></div>
-  </form>
+  <!-- App Section -->
+  <div id="appSection" class="hidden">
+    <form id="userForm">
+      <h3>Add User</h3>
+      <input type="text" id="name" placeholder="Name" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <button type="submit">Add User</button>
+      <div id="addMessage" class="message"></div>
+    </form>
 
-  <br/>
-  <h3>Find User by ID</h3>
-  <input type="number" id="searchId" placeholder="Enter user ID" />
-  <button id="getUserBtn">Get User</button>
-  <pre id="foundUser"></pre>
+    <form id="updateForm" class="hidden">
+      <h3>Update User</h3>
+      <input type="hidden" id="updateUserId" />
+      <input type="text" id="updateName" placeholder="Name" required />
+      <input type="email" id="updateEmail" placeholder="Email" required />
+      <input type="password" id="updatePin" placeholder="New PIN (optional)" />
+      <button type="submit">Update User</button>
+      <div id="updateMessage" class="message"></div>
+    </form>
 
-  <br/>
-  <h3>Users</h3>
-  <table id="userTable">
-    <thead>
-      <tr><th>ID</th><th>Name</th><th>Email</th><th>Delete</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <h3>Find User by ID</h3>
+    <input type="number" id="searchId" placeholder="Enter user ID" />
+    <button id="getUserBtn">Get User</button>
+    <pre id="foundUser"></pre>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    <h3>Users</h3>
+    <table id="userTable">
+      <thead>
+        <tr><th>ID</th><th>Name</th><th>Email</th><th>Actions</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-      async function loadUsers() {
-        try {
-          const res = await fetch('/users/all');
-          const users = await res.json();
-          const tbody = document.querySelector('#userTable tbody');
-          tbody.innerHTML = '';
-          users.forEach(u => {
-            const row = `
-              <tr>
-                <td>${u.id}</td>
-                <td>${u.name}</td>
-                <td>${u.email}</td>
-                <td><button onclick="deleteUser(${u.id})">Delete</button></td>
-              </tr>`;
-            tbody.innerHTML += row;
-          });
-        } catch (err) {
-          alert('Error loading users: ' + err.message);
-        }
-      }
+    <button id="logoutBtn">Logout</button>
+  </div>
 
-      async function deleteUser(id) {
-        try {
-          const res = await fetch(`/users/${id}`, { method: 'DELETE' });
-          if (!res.ok) throw new Error('Failed to delete user');
-          loadUsers();
-        } catch (err) {
-          alert('Error deleting user: ' + err.message);
-        }
-      }
+<script>
+  function showLogin() {
+    document.getElementById('loginSection').classList.remove('hidden');
+    document.getElementById('appSection').classList.add('hidden');
+  }
 
-      async function fetchUserById() {
-        const id = document.getElementById('searchId').value;
-        const output = document.getElementById('foundUser');
-        output.textContent = '';
-        if (!id) return;
-        try {
-          const res = await fetch(`/users/${id}`);
-          if (!res.ok) throw new Error('User not found');
-          const data = await res.json();
-          output.textContent = JSON.stringify(data, null, 2);
-        } catch (err) {
-          output.textContent = `Error: ${err.message}`;
-        }
-      }
+  function showApp() {
+    document.getElementById('loginSection').classList.add('hidden');
+    document.getElementById('appSection').classList.remove('hidden');
+  }
 
-      document.getElementById('getUserBtn').addEventListener('click', fetchUserById);
+  async function login() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pin = document.getElementById('loginPin').value.trim();
+    const msg = document.getElementById('loginMessage');
+    msg.textContent = '';
+    msg.className = 'message';
 
-      document.getElementById('userForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('name').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const msg = document.getElementById('addMessage');
-        msg.textContent = '';
-        msg.className = 'message';
+    if (!email || !pin) {
+      msg.textContent = '❌ Please enter both email and PIN.';
+      msg.className = 'error';
+      return;
+    }
 
-        try {
-          const res = await fetch('/users', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email })
-          });
-
-          if (res.status === 409) {
-            msg.textContent = '❌ Email already exists.';
-            msg.className = 'error';
-            return;
-          } else if (!res.ok) {
-            throw new Error('Failed to add user');
-          }
-
-          document.getElementById('name').value = '';
-          document.getElementById('email').value = '';
-          msg.textContent = '✅ User added successfully';
-          loadUsers();
-        } catch (err) {
-          msg.textContent = '❌ Error: ' + err.message;
-          msg.className = 'error';
-        }
+    try {
+      const res = await fetch('/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, pin })
       });
 
-      loadUsers();
-    });
-  </script>
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Invalid credentials');
+      }
 
+      msg.textContent = '✅ Login successful';
+      msg.className = 'message';
+      showApp();
+      loadUsers();
+    } catch (err) {
+      msg.textContent = '❌ ' + err.message;
+      msg.className = 'error';
+    }
+  }
+
+  async function logout() {
+    try {
+      const response = await fetch('/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Logout failed');
+      localStorage.removeItem('token');
+      showLogin();
+      window.location.reload();
+    } catch (err) {
+      alert('Logout failed: ' + err.message);
+    }
+  }
+
+  async function loadUsers() {
+    try {
+      const res = await fetch('/users/all', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to load users');
+
+      const users = await res.json();
+      const tbody = document.querySelector('#userTable tbody');
+      tbody.innerHTML = '';
+
+      users.forEach(u => {
+        const row = `
+          <tr>
+            <td>${u.id}</td>
+            <td>${u.name}</td>
+            <td>${u.email}</td>
+            <td>
+              <button onclick="editUser(${u.id}, '${u.name}', '${u.email}')">Edit</button>
+              <button onclick="deleteUser(${u.id})">Delete</button>
+            </td>
+          </tr>`;
+        tbody.innerHTML += row;
+      });
+    } catch (err) {
+      console.error('Error loading users:', err);
+      if (err.message.includes('401')) showLogin();
+    }
+  }
+
+  function editUser(id, name, email) {
+    document.getElementById('updateUserId').value = id;
+    document.getElementById('updateName').value = name;
+    document.getElementById('updateEmail').value = email;
+    document.getElementById('updatePin').value = '';
+    document.getElementById('updateForm').classList.remove('hidden');
+    document.getElementById('updateMessage').textContent = '';
+  }
+
+  async function deleteUser(id) {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+    try {
+      const res = await fetch(`/users/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Failed to delete user');
+      loadUsers();
+    } catch (err) {
+      console.error('Error deleting user:', err);
+    }
+  }
+
+  async function fetchUserById() {
+    const id = document.getElementById('searchId').value.trim();
+    const output = document.getElementById('foundUser');
+    output.textContent = '';
+
+    if (!id) return;
+
+    try {
+      const res = await fetch(`/users/${id}`, {
+        credentials: 'include'
+      });
+
+      if (!res.ok) throw new Error('User not found');
+
+      const data = await res.json();
+      output.textContent = JSON.stringify(data, null, 2);
+    } catch (err) {
+      output.textContent = `Error: ${err.message}`;
+    }
+  }
+
+  document.getElementById('userForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const msg = document.getElementById('addMessage');
+    msg.textContent = '';
+    msg.className = 'message';
+
+    if (!name || !email) {
+      msg.textContent = '❌ Name and Email are required.';
+      msg.className = 'error';
+      return;
+    }
+
+    try {
+      const res = await fetch('/users', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email })
+      });
+
+      if (res.status === 409) {
+        msg.textContent = '❌ Email already exists.';
+        msg.className = 'error';
+        return;
+      } else if (!res.ok) {
+        throw new Error('Failed to add user');
+      }
+
+      document.getElementById('name').value = '';
+      document.getElementById('email').value = '';
+      msg.textContent = '✅ User added successfully';
+      msg.className = 'message';
+      loadUsers();
+    } catch (err) {
+      msg.textContent = '❌ Error: ' + err.message;
+      msg.className = 'error';
+    }
+  });
+
+  document.getElementById('updateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById('updateUserId').value;
+    const name = document.getElementById('updateName').value.trim();
+    const email = document.getElementById('updateEmail').value.trim();
+    const pin = document.getElementById('updatePin').value.trim();
+    const msg = document.getElementById('updateMessage');
+
+    if (!name || !email) {
+      msg.textContent = '❌ Name and Email are required.';
+      msg.className = 'error';
+      return;
+    }
+
+    try {
+      const res = await fetch(`/users/${id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, pin: pin || undefined })
+      });
+
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.error || 'Failed to update user');
+      }
+
+      msg.textContent = '✅ User updated successfully';
+      msg.className = 'message';
+      document.getElementById('updateForm').classList.add('hidden');
+      loadUsers();
+    } catch (err) {
+      msg.textContent = '❌ ' + err.message;
+      msg.className = 'error';
+    }
+  });
+
+  document.getElementById('loginButton').addEventListener('click', login);
+  document.getElementById('getUserBtn').addEventListener('click', fetchUserById);
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+
+  async function checkAuth() {
+    try {
+      const res = await fetch('/users/all', {
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        showApp();
+        loadUsers();
+      } else {
+        showLogin();
+      }
+    } catch (err) {
+      showLogin();
+    }
+  }
+
+  checkAuth();
+</script>
 </body>
 </html>
