@@ -8,7 +8,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/DrunkensteinRobot/devops-node-db.git'
+                // Specify the branch 'main' explicitly
+                git branch: 'main', url: 'https://github.com/DrunkensteinRobot/devops-node-db.git'
             }
         }
 
@@ -20,10 +21,7 @@ pipeline {
 
         stage('Deploy (Compose Up)') {
             steps {
-                // Stop previous containers (optional)
                 sh 'docker compose down'
-                
-                // Start fresh containers
                 sh 'docker compose up -d'
             }
         }
