@@ -1,4 +1,4 @@
-
+version: "3.8"
 
 services:
   db:
@@ -7,7 +7,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: lkone
+      POSTGRES_PASSWORD:
       POSTGRES_DB: devops_lab
     ports:
       - "5432:5432"
@@ -25,12 +25,24 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: postgres
-      DB_PASSWORD: lkone
+      DB_PASSWORD:
       DB_NAME: devops_lab
     ports:
       - "3000:3000"
     volumes:
       - .:/usr/src/app
+    command: ["node", "app.js"]
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins-server
+    restart: always
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
 
 volumes:
   pgdata:
+  jenkins_home:
