@@ -1,38 +1,62 @@
 pipeline {
     agent any
 
+    tools {
+        nodejs 'nodejs-22.17.0'
+    }
+
     environment {
-        COMPOSE_PROJECT_NAME = "devops_node_app"
+        NODE_ENV = 'development'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Clone Repo') {
             steps {
-                // Specify the branch 'main' explicitly
-                git branch: 'main', url: 'https://github.com/DrunkensteinRobot/devops-node-db.git'
+                git 'https://github.com/DrunkensteinRobot/devops-node-db.git'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Install Dependencies') {
             steps {
-                sh 'docker compose build'
+                sh 'npm install'
             }
         }
 
-        stage('Deploy (Compose Up)') {
+        stage('Run Tests') {
             steps {
-                sh 'docker compose down'
-                sh 'docker compose up -d'
+                sh 'npm test'  // Make sure you have tests configured
+            }
+        }
+
+        stage('Lint') {
+            steps {
+                sh 'npm run lint'  // if you have eslint
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'npm run build' // optional
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                branch 'main'
+            }
+            steps {
+                echo 'Deploying app...'
+                // e.g., scp, rsync, or call your deploy script
             }
         }
     }
 
     post {
-        success {
-            echo "✅ App deployed successfully!"
+        always {
+            echo 'Pipeline completed.'
         }
         failure {
-            echo "❌ Deployment failed!"
+            echo 'Pipeline failed!'
         }
     }
 }
