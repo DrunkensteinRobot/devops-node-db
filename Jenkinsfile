@@ -18,25 +18,25 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm install'
+                bat 'npm install'
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh 'npm test' // Make sure you have test script in package.json
+                bat 'npm test' // Make sure you have test script in package.json
             }
         }
 
         stage('Lint') {
             steps {
-                sh 'npm run lint' // Make sure lint script exists in package.json
+                bat 'npm run lint' // Make sure lint script exists in package.json
             }
         }
 
         stage('Build') {
             steps {
-                sh 'npm run build' // Optional: Ensure this script exists
+                bat 'npm run build' // Optional: Ensure this script exists
             }
         }
 
