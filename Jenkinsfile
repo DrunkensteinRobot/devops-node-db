@@ -9,12 +9,11 @@ pipeline {
         NODE_ENV = 'development'
     }
 
-    stages {
-        stage('Clone Repo') {
-            steps {
-                git 'https://github.com/DrunkensteinRobot/devops-node-db.git'
-            }
-        }
+   stage('Clone Repo') {
+    steps {
+        git branch: 'main', url: 'https://github.com/DrunkensteinRobot/devops-node-db.git'
+    }
+}
 
         stage('Install Dependencies') {
             steps {
