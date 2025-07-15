@@ -9,11 +9,12 @@ pipeline {
         NODE_ENV = 'development'
     }
 
-   stage('Clone Repo') {
-    steps {
-        git branch: 'main', url: 'https://github.com/DrunkensteinRobot/devops-node-db.git'
-    }
-}
+    stages {
+        stage('Clone Repo') {
+            steps {
+                git branch: 'main', url: 'https://github.com/DrunkensteinRobot/devops-node-db.git'
+            }
+        }
 
         stage('Install Dependencies') {
             steps {
@@ -23,19 +24,19 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                sh 'npm test'  // Make sure you have tests configured
+                sh 'npm test' // Make sure you have test script in package.json
             }
         }
 
         stage('Lint') {
             steps {
-                sh 'npm run lint'  // if you have eslint
+                sh 'npm run lint' // Make sure lint script exists in package.json
             }
         }
 
         stage('Build') {
             steps {
-                sh 'npm run build' // optional
+                sh 'npm run build' // Optional: Ensure this script exists
             }
         }
 
@@ -45,7 +46,7 @@ pipeline {
             }
             steps {
                 echo 'Deploying app...'
-                // e.g., scp, rsync, or call your deploy script
+                // Add deployment logic here
             }
         }
     }
