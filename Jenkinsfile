@@ -24,19 +24,19 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                bat 'npm test' // Make sure you have test script in package.json
+                bat 'npm test'
             }
         }
 
         stage('Lint') {
             steps {
-                bat 'npm run lint' // Make sure lint script exists in package.json
+                bat 'npm run lint'
             }
         }
 
         stage('Build') {
             steps {
-                bat 'npm run build' // Optional: Ensure this script exists
+                bat 'npm run build'
             }
         }
 
@@ -45,18 +45,18 @@ pipeline {
                 branch 'main'
             }
             steps {
-                echo 'Deploying app...'
-                // Add deployment logic here
+                echo '✅ Deploying app...'
+                // Add Docker commands or deployment logic here
             }
         }
     }
 
     post {
         always {
-            echo 'Pipeline completed.'
+            echo '✅ Pipeline completed.'
         }
         failure {
-            echo 'Pipeline failed!'
+            echo '❌ Pipeline failed!'
         }
     }
 }
